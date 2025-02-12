@@ -1,12 +1,18 @@
 import javax.swing.*;
-
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import BaseDatos.GestionBD;
 import model.Alumno;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class VentanaAlumno extends JFrame {
+	private Alumno alumno;
+	private GestionBD db;
+	private JTable tablaNotas;
     public VentanaAlumno(Alumno alumno) {
         setTitle("Vista Alumno - " + alumno.getNombre());
         setSize(400, 300);
@@ -41,5 +47,33 @@ public class VentanaAlumno extends JFrame {
                 dispose();
             }
         });
+    }
+    private void mostrarNotas(String dniAlumno) {
+    	try {
+			ResultSet rs = db.obtenerNotasAlumno(dniAlumno);
+			int filas = 0;
+			while (rs.next()) {
+			    filas++;
+			}//mientras el puntero detecte otra fila la cuenta
+
+			
+			rs.beforeFirst();// LLevamos arriba otra vez el puntero
+			 Object[][] data = new Object[filas][2];//Usamos las filas que nos devuelve, las columnas son conocidas
+	            int i = 0;
+	            while (rs.next()) {
+	                data[i][0] = rs.getString("DENOMINACION");
+	                data[i][1] = rs.getDouble("NOTA");
+	                i++;
+	                
+
+	            }String[] columnNames = {"Asignatura", "Nota"};
+                tablaNotas.setModel(new DefaultTableModel(data, columnNames));
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	
+    	
     }
 }

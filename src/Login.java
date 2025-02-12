@@ -24,7 +24,7 @@ public class Login extends JFrame {
         setResizable(false);
         getContentPane().setFont(new Font("Tahoma", Font.PLAIN, 10));
         getContentPane().setBackground(new Color(176, 224, 230));
-        setIconImage(Toolkit.getDefaultToolkit().getImage(Login.class.getResource("/imagenes/logo.png")));
+       setIconImage(Toolkit.getDefaultToolkit().getImage(Login.class.getResource("/imagenes/logo.png")));
         setTitle("Login");
         setSize(512, 274);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

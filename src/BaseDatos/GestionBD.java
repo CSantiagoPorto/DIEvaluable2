@@ -23,8 +23,38 @@ public class GestionBD {
 
 	private ResultSet resultado;
 	
+	//Necesito un método que me de una nota para x alumno en x asignatura
+	
+	public ResultSet notaAlumnoAsignatura(String dniAlumno, String idAsignatura) throws SQLException {
+		con = conexion.getConexion();
+		String query= "SELECT NOTA FROM notas WHERE DNI_ALUMNO =  '"+dniAlumno+ "' AND ID_ASIGNATURA = '"+ idAsignatura+ "'";
+		st = (Statement) con.createStatement();
+		return st.executeQuery(query);
+	}
 	
 	
+	//Necesito un método para que el profesor cargue los módulos
+	//Realmente esto sería un Inner con un Where al dni
+	
+	public ResultSet modulosProfesor(String dniProfesor) throws SQLException {
+	    con = conexion.getConexion();
+	    String query = "SELECT id_asignatura, denominacion FROM asignaturas WHERE dni_profesor = '" + dniProfesor + "'";
+
+	    st = (Statement) con.createStatement();
+	    return st.executeQuery(query);
+	}
+//Ahora lo llamamos desde VentanaProfesor [cargarModulos()]para que cargue
+	
+	public ResultSet obtenerAlumnoAsignatura(String idAsignatura) throws SQLException {
+	    con = conexion.getConexion();
+	    
+	    //RECUERDA: En SQL si dos columnas de distintas tablas se llaman igual hay que ponerles un distintitvo
+	    String query = "SELECT a.NOMBRE, a.APELLIDOS FROM alumnos a " + "JOIN matriculas m ON a.dni_alumno = m.dni_alumno " + "WHERE m.id_asignatura = '" + idAsignatura + "'";
+	    st = (Statement) con.createStatement();
+	    return st.executeQuery(query);
+	}
+
+
 	
 	//COMPROBAR
 	public ResultSet obtenerNotasAlumno(String dniAlumno) throws SQLException {
@@ -33,8 +63,8 @@ public class GestionBD {
 	    //Guardar datos boolean
 	    
 	    //NECESITO INNER JOIN PORQUE TENGO QUE RELACIONAR LAS 2 COLUMNAS
-	    String query = "SELECT modulos.DENOMINACION, notas.NOTA FROM notas " +
-	                 "JOIN modulos ON notas.ID_MODULO = modulos.ID_ASIGNATURA " +
+	    String query = "SELECT asignaturas.DENOMINACION, notas.NOTA FROM notas " +
+	                 "JOIN asignaturas ON notas.ID_ASIGNATURA = asignaturas.ID_ASIGNATURA " +
 	                 "WHERE notas.DNI_ALUMNO = '" + dniAlumno + "'";
 	    st = (Statement) con.createStatement();
 	    st.close(); 
@@ -46,7 +76,7 @@ public class GestionBD {
 	public boolean ponerNota(String dniAlumno, String idModulo, String nota) throws SQLException {
 	    boolean insertado = false;
 	    con = conexion.getConexion(); 
-	    String sql = "INSERT INTO notas (DNI_ALUMNO, ID_MODULO, NOTA) VALUES ('" + dniAlumno + "', '" + idModulo + "', '" + nota + "')";
+	    String sql = "INSERT INTO notas (DNI_ALUMNO, ID_ASIGNATURA, NOTA) VALUES ('" + dniAlumno + "', '" + idModulo + "', '" + nota + "')";
 
 	    try {
 	        st = (Statement) con.createStatement(); 
@@ -357,7 +387,16 @@ public class GestionBD {
 		}
 		return encontrado;
 	}
-	//REVISADO
+	//REVISADO Y EN USO
+	public ResultSet obtenerDniPorNombre(String nombreCompleto) throws SQLException {
+	    con = conexion.getConexion();
+	    
+	    String query = "SELECT dni_alumno FROM alumnos WHERE CONCAT(nombre, ' ', apellidos) = '" + nombreCompleto + "'";
+	    
+	    st = (Statement) con.createStatement();
+	    return st.executeQuery(query);
+	}
+
 	public ResultSet BuscarAlumno(String dni_alumno) throws SQLException {
 		con=conexion.getConexion();
 		String sql="SELECT * FROM alumnos WHERE DNI='"+dni_alumno+"' ";
