@@ -23,14 +23,51 @@ public class GestionBD {
 
 	private ResultSet resultado;
 	
-	//Necesito un método que me de una nota para x alumno en x asignatura
 	
-	public ResultSet notaAlumnoAsignatura(String dniAlumno, String idAsignatura) throws SQLException {
-		con = conexion.getConexion();
-		String query= "SELECT NOTA FROM notas WHERE DNI_ALUMNO =  '"+dniAlumno+ "' AND ID_ASIGNATURA = '"+ idAsignatura+ "'";
+	
+	
+	//OK
+	public ResultSet mostrarNotasAlumno(String dniAlumno) throws SQLException {
+		con= conexion.getConexion();
+		String query= "SELECT asignaturas.denominacion, notas.calificacion " + "FROM notas " + "JOIN asignaturas ON notas.id_asignatura= asignaturas.id_asignatura "+ "WHERE notas.dni = '" +  dniAlumno + "'";
+		
+		System.out.println("Estoy ejecutando"+ query);
+		
+		
 		st = (Statement) con.createStatement();
 		return st.executeQuery(query);
 	}
+	
+	//Necesito un método que me de una nota para x alumno en x asignatura
+	public String obtenerIdAsignaturaPorNombre(String nombreModulo) {
+	    try {
+	        con = conexion.getConexion();
+	        String query = "SELECT id_asignatura FROM asignaturas WHERE denominacion = '" + nombreModulo + "'";
+	        st = (Statement) con.createStatement();
+	        ResultSet rs = st.executeQuery(query);
+
+	        if (rs.next()) {
+	            return rs.getString("id_asignatura");
+	        }
+	        rs.close();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return null;
+	}
+
+	//OK
+	public ResultSet notaAlumnoAsignatura(String dniAlumno, String idAsignatura) throws SQLException {
+		
+		//Como el comboBox tiene nombre y no notas, primero hay que converti el nombre en su id_asignatura
+	    con = conexion.getConexion();
+	    String query= "SELECT calificacion FROM notas WHERE dni =  '"+dniAlumno+ "' AND ID_ASIGNATURA = '"+ idAsignatura+ "'";
+	    
+	    System.out.println("Ejecutando consulta: " + query);
+	    st = (Statement) con.createStatement();
+	    return st.executeQuery(query);
+	}
+
 	
 	
 	//Necesito un método para que el profesor cargue los módulos
@@ -48,11 +85,16 @@ public class GestionBD {
 	public ResultSet obtenerAlumnoAsignatura(String idAsignatura) throws SQLException {
 	    con = conexion.getConexion();
 	    
-	    //RECUERDA: En SQL si dos columnas de distintas tablas se llaman igual hay que ponerles un distintitvo
-	    String query = "SELECT a.NOMBRE, a.APELLIDOS FROM alumnos a " + "JOIN matriculas m ON a.dni_alumno = m.dni_alumno " + "WHERE m.id_asignatura = '" + idAsignatura + "'";
+	    
+	    String query = "SELECT a.dni_alumno, a.nombre, a.apellidos FROM alumnos a " +
+	                   "INNER JOIN matriculas m ON a.dni_alumno = m.dni_alumno " +
+	                   "WHERE m.id_asignatura = '" + idAsignatura + "'";
+	    
 	    st = (Statement) con.createStatement();
 	    return st.executeQuery(query);
 	}
+
+
 
 
 	
@@ -73,20 +115,50 @@ public class GestionBD {
 	    
 	}
 //COMPROBAR
-	public boolean ponerNota(String dniAlumno, String idModulo, String nota) throws SQLException {
+	//Como hemos puesto como Varchar el id_Nota necesito generarlo
+	public String generarIdNota(String dniAlumno, String idAsignatura) {
+	    return "N" + dniAlumno + idAsignatura + System.currentTimeMillis();
+	}
+
+	public boolean ponerNota(String dniAlumno, String idAsignatura, String nota) throws SQLException {
 	    boolean insertado = false;
 	    con = conexion.getConexion(); 
-	    String sql = "INSERT INTO notas (DNI_ALUMNO, ID_ASIGNATURA, NOTA) VALUES ('" + dniAlumno + "', '" + idModulo + "', '" + nota + "')";
-
 	    try {
+	    	 System.out.println("Intentando poner nota. DNI: " + dniAlumno + ", ID Asignatura: " + idAsignatura + ", Nota: " + nota);
+	    String existe="SELECT * FROM notas WHERE dni = '"+ dniAlumno +"' AND ID_ASIGNATURA= '"+ idAsignatura + "'";
+	   
+	    System.out.println("Consulta de existencia: " + existe);
+	    st=(Statement) con.createStatement();
+	    ResultSet rs = st.executeQuery(existe);
+	    
+	    //Si ya existe necesito hacer un UPDATE
+	    if(rs.next()) {
+	    	rs.close();//cierro el rs a ver si va a ser eso
+	    String actualizar= "UPDATE notas SET calificacion= '"+nota+ "' WHERE dni = '"+dniAlumno+ "' AND id_asignatura = '"+ idAsignatura + "'";
+	    System.out.println("Ejecutando UPDATE: " + actualizar);
 	        st = (Statement) con.createStatement(); 
 
-	        int confirmar = st.executeUpdate(sql); 
+	        int confirmar = st.executeUpdate(actualizar); 
 
 	        if (confirmar == 1) {
 	            insertado = true;
+	            System.out.println("Nota actualizada correctamente.");
 	        }
+	    }else {
+            
+            String idNota = generarIdNota(dniAlumno, idAsignatura);
 
+          
+            String guardar = "INSERT INTO notas (id_nota, dni, id_asignatura, calificacion) VALUES ('" + idNota + "', '" + dniAlumno + "', '" + idAsignatura + "', '" + nota + "')";
+          
+            System.out.println("Ejecutando INSERT: " + guardar);
+            
+            int confirmar = st.executeUpdate(guardar);
+            if (confirmar == 1) {
+                insertado = true;
+                System.out.println("Nueva nota insertada.");
+            }
+        }	//rs.close();
 	        st.close(); 
 	        con.close(); 
 
@@ -98,303 +170,27 @@ public class GestionBD {
 	}
 
 	
-	//REVISADO
-	public boolean insertarAlumno(String dni, String nombre, String apellidos, String direccion, String pass) throws SQLException {
 
-		boolean insertado = false;
-
-		con=conexion.getConexion();
-
-		String sql="insert into alumnos (DNI,NOMBRE,APELLIDOS,DIRECCION,PASS) values ('"+dni+"','"+nombre+"','"+apellidos+"','"+direccion+"','"+pass+"')";
-
-		try {
-
-			st=(Statement) con.createStatement();
-
-			int confirmar = st.executeUpdate(sql);
-
-			if (confirmar == 1){
-
-				insertado = true;
-
-			}
-
-			st.close();
-
-			con.close();
-
-		} catch (SQLException e) {
-
-			e.printStackTrace();
-
-		}
-
-		return insertado;
-
-	}
-	//REVISADO
-	public boolean insertarProfesor(String dni, String nombre, String apellidos, String direccion, String pass) throws SQLException {
-
-		boolean insertado = false;
-
-		con=conexion.getConexion();
-
-		String sql="insert into profesores (DNI,NOMBRE,APELLIDOS,DIRECCION,PASS) values ('"+dni+"','"+nombre+"','"+apellidos+"','"+direccion+"','"+pass+"')";
-
-		try {
-
-			st=(Statement) con.createStatement();
-
-			int confirmar = st.executeUpdate(sql);
-
-			if (confirmar == 1){
-
-				insertado = true;
-
-			}
-
-			st.close();
-
-			con.close();
-
-		} catch (SQLException e) {
-
-			e.printStackTrace();
-
-		}
-
-		return insertado;
-
-	}
-
-	
-	
-	
-	//revisado y adaptado
-	public boolean insertarAsignatura(String id_asignatura,  String denominacion, String horas, String descripcion) throws SQLException {
-
-		boolean insertado = false;
-
-		con=conexion.getConexion();
-
-		String sql="insert into asignaturas (ID_ASIGNATURA,DENOMINACION,HORAS,DESCRIPCION) values ('"+id_asignatura+"','"+denominacion+"','"+horas+"','"+descripcion+"')";
-
-		try {
-
-			st=(Statement) con.createStatement();
-
-			int confirmar = st.executeUpdate(sql);
-
-			if (confirmar == 1){
-
-				insertado = true;
-
-			}
-
-			st.close();
-
-			con.close();
-
-		} catch (SQLException e) {
-
-			e.printStackTrace();
-
-		}
-
-		return insertado;
-
-	}
-	//REVISADO
-	public int modificarAlumno(String dni_alumno, String nombre, String apellidos, String direccion, String pass) throws SQLException {
-
-		int confirmar=0;
-
-		con=conexion.getConexion();
-
-		String sql="update alumnos set DNI='"+dni_alumno+"', NOMBRE='"+nombre+"', APELLIDOS='"+apellidos+"', DIRECCION='"+direccion+"', PASS='"+pass+"' where DNI="+dni_alumno+"";
-
-		try {
-
-			st=(Statement) con.createStatement();
-
-			confirmar=st.executeUpdate(sql);
-
-			st.close();
-
-			con.close();
-
-		}  catch (SQLException e) {
-
-			e.printStackTrace();
-
-		}
-
-		return confirmar;
-
-	}
-//REVISADO
-	public int modificarProfesor(String dni_profesor, String nombre, String apellidos, String direccion, String pass) throws SQLException {
-
-		int confirmar=0;
-
-		con=conexion.getConexion();
-
-		String sql="update profesores set DNI='"+dni_profesor+"', NOMBRE='"+nombre+"', APELLIDOS='"+apellidos+"', DIRECCION='"+direccion+"', PASS='"+pass+"' where DNI="+dni_profesor+"";
-
-		try {
-
-			st=(Statement) con.createStatement();
-
-			confirmar=st.executeUpdate(sql);
-
-			st.close();
-
-			con.close();
-
-		}  catch (SQLException e) {
-
-			e.printStackTrace();
-
-		}
-
-		return confirmar;
-
-	}
- 
-
-	//REVISADO
-	public int eliminarAlumno(String dni) throws SQLException {
-		int confirmar=0;
-		con=conexion.getConexion();
-		String sql="delete from alumnos where DNI="+dni;
-		try {
-			st=(Statement) con.createStatement();
-			confirmar=st.executeUpdate(sql);
-			st.close();
-			con.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return confirmar;
-	}
-	//REVISADO
-	public int eliminarProfesor(String dni_profesor) throws SQLException {
-		int confirmar=0;
-		con=conexion.getConexion();
-		String sql="delete from profesores where DNI="+dni_profesor;
-		try {
-			st=(Statement) con.createStatement();
-			confirmar=st.executeUpdate(sql);
-			st.close();
-			con.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return confirmar;
-	}
-	
-
-	//revisado y cambiado
-	public boolean comprobarAlumno(String dni, String pass) throws SQLException {
-		boolean encontrado = false;
-		con=conexion.getConexion();
-		String sql="SELECT * FROM alumnos WHERE DNI='"+dni+"'and PASS='"+pass+"' ";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-			while (resultado.next()){
-				encontrado = true;
-			}
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return encontrado;
-	}
-	
-	//revisado y cambiado---> Te dice si lo encontró o no pero no te devuelve los datos
-	public boolean comprobarProfesor(String dni_profesor, String pass) throws SQLException {
-		boolean encontrado = false;
-		con=conexion.getConexion();
-		String sql="SELECT * FROM profesores WHERE DNI='"+dni_profesor+"'and PASS='"+pass+"' ";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-			while (resultado.next()){
-				encontrado = true;
-			}
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return encontrado;
-	}
-	
-	
-	//Necesitamos que devuelva los datos del alumno. Si es boolean sólo devuelve si ha encontrado o no el alumno
-	public ResultSet buscarAlumno(String nombre, String password) throws SQLException {
-		
-		con=conexion.getConexion();
-		String sql="SELECT * FROM alumnos WHERE NOMBRE='"+ nombre +"'AND PASS='"+password+"'";
-		try{
-			st=(Statement) con.createStatement();
-			return st.executeQuery(sql);
-			
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	//REVISADO Y ADAPTADO
-	public boolean existeProfesor(String dni_profesor) throws SQLException {
-		boolean encontrado = false;
-		con=conexion.getConexion();
-		String sql="SELECT * FROM profesores WHERE DNI='"+dni_profesor+"' ";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-			while (resultado.next()){
-				encontrado = true;
-			}
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return encontrado;
-	}
-	
-
-	//REVISADO
-	public boolean buscarAsignatura(String id_asignatura) throws SQLException {
-		boolean encontrado = false;
-		con=conexion.getConexion();
-		String sql="SELECT * FROM modulos WHERE ID_ASIGNATURA='"+id_asignatura+"' ";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-			while (resultado.next()){
-				encontrado = true;
-			}
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return encontrado;
-	}
 	//REVISADO Y EN USO
 	public ResultSet obtenerDniPorNombre(String nombreCompleto) throws SQLException {
 	    con = conexion.getConexion();
 	    
-	    String query = "SELECT dni_alumno FROM alumnos WHERE CONCAT(nombre, ' ', apellidos) = '" + nombreCompleto + "'";
-	    
+	    String query = "SELECT dni_alumno FROM alumnos WHERE CONCAT(nombre, ' ', apellidos) = '" + nombreCompleto + "' LIMIT 1";
+
 	    st = (Statement) con.createStatement();
 	    return st.executeQuery(query);
+	}
+
+	public ResultSet buscarAlumno(String nombre, String password) throws SQLException {
+	    con = conexion.getConexion();
+	    String sql = "SELECT * FROM alumnos WHERE NOMBRE='" + nombre + "' AND PASS='" + password + "'";
+	    try {
+	        st = (Statement) con.createStatement();
+	        return st.executeQuery(sql);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return null;
 	}
 
 	public ResultSet BuscarAlumno(String dni_alumno) throws SQLException {
@@ -425,60 +221,7 @@ public class GestionBD {
 	}
 
 	
-	//REVISADO
-	public ResultSet BuscarAsignatura(String id_asignatura) throws SQLException {
-		con=conexion.getConexion();
-		String sql="SELECT * FROM modulos WHERE CLAVE='"+id_asignatura+"' ";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultado;
-	}
-	//REVISADO
-	public ResultSet BuscarTodosAlumnos() throws SQLException {
-		con=conexion.getConexion();
-		String sql="SELECT * FROM alumnos";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultado;
-	}
-	//revisado
-	public ResultSet BuscarTodosProfesores() throws SQLException {
-		con=conexion.getConexion();
-		String sql="SELECT * FROM profesores";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultado;
-	}
-	
-	
-	public ResultSet BuscarTodosAsignaturas() throws SQLException {
-		con=conexion.getConexion();
-		String sql="SELECT * FROM modulos";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultado;
-	}
+
 }
  
  

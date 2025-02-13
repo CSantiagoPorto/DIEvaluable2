@@ -142,11 +142,30 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
         return null;
     }
 
-    private void guardarNota() {
-        String moduloSelec = (String) cbModulos.getSelectedItem();
+    public void guardarNota() {
+        String asignaturaSelec = (String) cbModulos.getSelectedItem();
         String alumnoSelec = (String) cbAlumnos.getSelectedItem();
         String notaIngresada = tfNota.getText();
 
+        if (asignaturaSelec == null || alumnoSelec == null) {
+            JOptionPane.showMessageDialog(this, "Debe seleccionar un módulo y un alumno", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+      
+        String idAsignatura = db.obtenerIdAsignaturaPorNombre(asignaturaSelec);
+        if (idAsignatura == null) {
+            JOptionPane.showMessageDialog(this, "No se encontró la asignatura seleccionada", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String dniAlumno = obtenerDniAlumno(alumnoSelec);
+        if (dniAlumno == null) {
+            JOptionPane.showMessageDialog(this, "No se encontró el alumno seleccionado", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+     
         double nota;
         try {
             nota = Double.parseDouble(notaIngresada);
@@ -155,9 +174,19 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
             return;
         }
 
-        JOptionPane.showMessageDialog(this, "Nota guardada:\n" + "Módulo: " + moduloSelec + "\n" + "Alumno: " + alumnoSelec + "\n" + "Nota: " + nota);
+        try {
+            boolean guardado = db.ponerNota(dniAlumno, idAsignatura, notaIngresada);
+            if (guardado) {
+                JOptionPane.showMessageDialog(this, "Nota actualizada correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo guardar la nota", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al guardar la nota", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
-    
+
     public void mostrarModulos(String dniProfesor) {
     	
     	try {
@@ -179,27 +208,56 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
     	
     }
     public void mostrarAlumnos(String idAsignatura) {
-    	 try {
-			ResultSet rs = db.obtenerAlumnoAsignatura(idAsignatura);
-			cbAlumnos.removeAllItems();
-			while(rs.next()){
-				String nombreA= rs.getString("nombre") + " " + rs.getString("apellidos");
-				cbAlumnos.addItem(nombreA);
-			}
-			rs.close();
-		} catch (SQLException e) {
-			
-			e.printStackTrace();
-		}
-    	
+        try {
+           
+            System.out.println("ID Asignatura recibido: " + idAsignatura);
+            cbAlumnos.removeAllItems();
+
+            ResultSet rs = db.obtenerAlumnoAsignatura(idAsignatura);
+
+        
+            if (!rs.isBeforeFirst()) { 
+                System.out.println("No hay alumnos matriculados en esta asignatura.");
+                JOptionPane.showMessageDialog(this, "No hay alumnos matriculados en este módulo.", "Información", JOptionPane.INFORMATION_MESSAGE);
+              //  cbAlumnos.removeAllItems();
+                return;
+            }
+
+          
+           // cbAlumnos.removeAllItems();
+            while (rs.next()) {
+                String nombreA = rs.getString("nombre") + " " + rs.getString("apellidos");
+                System.out.println("Alumno encontrado: " + nombreA);
+                cbAlumnos.addItem(nombreA);
+            }
+
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al cargar los alumnos", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
-    public void mostrarNota(String dniAlumno, String idAsignatura) {
+
+
+    public void mostrarNota(String dniAlumno, String nombreAsignatura) {
     	try {
+    		//El combo me devuelve el nmbre, necesito obtener el id, para poder eenseñar la nota
+    		String idAsignatura=db.obtenerIdAsignaturaPorNombre(nombreAsignatura);
+    		if(idAsignatura == null) {
+    			 System.out.println("Error: No se encontró ID para la asignatura " + nombreAsignatura);
+    	            tfNota.setText(""); 
+    	            return;
+    		}
 			ResultSet rs= db.notaAlumnoAsignatura(dniAlumno, idAsignatura) ;
 			if(rs.next()) {
-				tfNota.setText(rs.getString("NOTA"));
+				String nota=(rs.getString("calificacion"));
+				 tfNota.setText(nota);
+				 System.out.println("Nota encontrada: " + nota);
 			}else {tfNota.setText("");
+			 System.out.println("No se encontró nota para este alumno en esta asignatura.");
+			
 				}
+			rs.close();
 		} catch (SQLException e) {
 			
 			e.printStackTrace();
@@ -207,12 +265,25 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
 		}
     }
 
+    
     @Override
     public void itemStateChanged(ItemEvent e) {
-    	if (e.getStateChange() == ItemEvent.SELECTED) { // Detectamos un cambio en el JComboBox
-            String idAsignatura = (String) cbModulos.getSelectedItem();
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            String nombreAsignatura = (String) cbModulos.getSelectedItem();
+            System.out.println("Módulo seleccionado: " + nombreAsignatura);
+
+            String idAsignatura = db.obtenerIdAsignaturaPorNombre(nombreAsignatura);
+            if (idAsignatura == null) {
+                System.out.println("No se encontró un ID para la asignatura: " + nombreAsignatura);
+                JOptionPane.showMessageDialog(this, "No se encontró la asignatura seleccionada.", "Error", JOptionPane.ERROR_MESSAGE);
+                cbAlumnos.removeAllItems();
+                return;
+            }
+
+            System.out.println("ID real de la asignatura: " + idAsignatura);
             mostrarAlumnos(idAsignatura);
-    	}
+
+        }
     }
 
     @Override

@@ -11,10 +11,11 @@ public class Alumno extends Usuario {
         super(nombre, apellidos, direccion, pass);
     }
 
-    public Alumno(String nombre, String apellidos, String direccion, String pass, String dni_alumno) {
+    public Alumno(String dni_alumno, String nombre, String apellidos, String direccion, String pass) {
         super(nombre, apellidos, direccion, pass);
         this.dni_alumno = dni_alumno;
     }
+
 
     public String getDni_alumno() {
         return dni_alumno;
