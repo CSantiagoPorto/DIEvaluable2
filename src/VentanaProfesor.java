@@ -33,7 +33,7 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
         db = new GestionBD();
         setResizable(false);
         getContentPane().setBackground(new Color(176, 224, 230));
-        setIconImage(Toolkit.getDefaultToolkit().getImage(VentanaProfesor.class.getResource("/imagenes/logo.png")));
+        setIconImage(Toolkit.getDefaultToolkit().getImage(VentanaProfesor.class.getResource("/Imagenes/logo_resized_50x50.png")));
         setTitle("Gestión de Notas - Profesor");
         setSize(500, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

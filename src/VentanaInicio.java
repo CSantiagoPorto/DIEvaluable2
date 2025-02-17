@@ -22,6 +22,7 @@ public class VentanaInicio extends JFrame {
     private GestionBD db;
 
     public VentanaInicio() {
+    	setIconImage(Toolkit.getDefaultToolkit().getImage(VentanaInicio.class.getResource("/Imagenes/logo_resized_50x50.png")));
         db = new GestionBD();
         setResizable(false);
         setTitle("Login");
@@ -95,13 +96,23 @@ public class VentanaInicio extends JFrame {
 
     private void validarLogin() {
         String cargo = (String) cbCargo.getSelectedItem();
-        String user = userField.getText();
-        String password = new String(passwordField.getPassword());
+        String user = userField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        System.out.println("Cargo seleccionado: " + cargo);
+        System.out.println("Usuario ingresado: " + user);
+        System.out.println("Contraseña ingresada: " + password);
+
+        if (user.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos.");
+            return;
+        }
 
         if ("Alumno".equals(cargo)) {
             try {
                 ResultSet rs = db.buscarAlumno(user, password);
                 if (rs != null && rs.next()) {
+                    System.out.println("Alumno encontrado en la BD.");
                     Alumno alumno = new Alumno(
                         rs.getString("dni_alumno"),
                         rs.getString("nombre"),
@@ -112,34 +123,42 @@ public class VentanaInicio extends JFrame {
                     new VentanaAlumno(alumno).setVisible(true);
                     dispose();
                 } else {
+                    System.out.println("Alumno NO encontrado.");
                     JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.");
                 }
             } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                System.out.println("Error SQL al buscar Alumno.");
                 e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else if ("Profesor".equals(cargo)) {
             try {
                 ResultSet rs = db.buscarProfesor(user, password);
                 if (rs != null && rs.next()) {
+                    System.out.println("Profesor encontrado en la BD.");
                     Profesor profesor = new Profesor(
+                        rs.getString("dni_profesor"),
                         rs.getString("nombre"),
                         rs.getString("apellidos"),
                         rs.getString("direccion"),
-                        rs.getString("pass"),
-                        rs.getString("dni_profesor")
+                        rs.getString("pass")
                     );
+                    System.out.println("Abriendo VentanaProfesor...");
                     new VentanaProfesor(profesor).setVisible(true);
                     dispose();
                 } else {
+                    System.out.println("Profesor NO encontrado.");
                     JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.");
                 }
             } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                System.out.println("Error SQL al buscar Profesor.");
                 e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Por favor, seleccione un cargo.");
         }
     }
+
+
 }

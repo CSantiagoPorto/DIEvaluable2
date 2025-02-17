@@ -6,7 +6,7 @@ public class Profesor extends Usuario{
    
     private List<String> asignatura;
     private String dni_profesor;
-	public Profesor(String nombre, String apellidos, String direccion, String pass, String dni_profesor) {
+	public Profesor(String dni_profesor,String nombre, String apellidos, String direccion, String pass) {
 		super(nombre, apellidos, direccion, pass);
 		this.dni_profesor = dni_profesor;
 	}
