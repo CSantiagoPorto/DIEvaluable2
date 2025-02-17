@@ -74,7 +74,7 @@ public class VentanaAlumno extends JFrame {
 
         cerrarSesionBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                new Login().setVisible(true);
+                new VentanaInicio().setVisible(true);
                 dispose();
             }
         });

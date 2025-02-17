@@ -8,7 +8,7 @@ public class Entrada {
                 try {
                 	
              
-                    Login frame = new Login();
+                    VentanaInicio frame = new VentanaInicio();
                     frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();

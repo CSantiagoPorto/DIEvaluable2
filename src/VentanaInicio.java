@@ -1,34 +1,39 @@
 import javax.swing.*;
-
-import BaseDatos.GestionBD;
-import model.Alumno;
-import model.Profesor;
-import model.Usuario;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class Login extends JFrame {
+import BaseDatos.GestionBD;
+import model.Alumno;
+import model.Profesor;
+import model.Usuario;
+
+public class VentanaInicio extends JFrame {
     private JTextField userField;
     private JPasswordField passwordField;
     private JComboBox<String> cbCargo;
-    private JButton logo;
+    private JButton btnEntrar;
+    private JButton btnLimpiar;
+    private JButton btnSalir;
+    private JButton btnRegistrar;
+    private JLabel lblLogo;
     private GestionBD db;
 
-    public Login() {
-    
+    public VentanaInicio() {
         db = new GestionBD();
         setResizable(false);
-        getContentPane().setFont(new Font("Tahoma", Font.PLAIN, 10));
-        getContentPane().setBackground(new Color(176, 224, 230));
-       setIconImage(Toolkit.getDefaultToolkit().getImage(Login.class.getResource("/imagenes/logo.png")));
         setTitle("Login");
-        setSize(512, 274);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setBounds(100, 100, 500, 350);
+        getContentPane().setBackground(SystemColor.control);
         getContentPane().setLayout(null);
+
+        lblLogo = new JLabel("");
+        lblLogo.setIcon(new ImageIcon(VentanaInicio.class.getResource("/Imagenes/logo_less_width.png")));
+        lblLogo.setBounds(324, 30, 176, 120);
+        getContentPane().add(lblLogo);
 
         JLabel userLabel = new JLabel("Usuario:");
         userLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
@@ -36,7 +41,7 @@ public class Login extends JFrame {
         getContentPane().add(userLabel);
 
         userField = new JTextField();
-        userField.setBounds(120, 30, 200, 25);
+        userField.setBounds(120, 30, 165, 25);
         getContentPane().add(userField);
 
         JLabel passwordLabel = new JLabel("Contraseña:");
@@ -45,7 +50,7 @@ public class Login extends JFrame {
         getContentPane().add(passwordLabel);
 
         passwordField = new JPasswordField();
-        passwordField.setBounds(120, 70, 200, 25);
+        passwordField.setBounds(120, 70, 165, 25);
         getContentPane().add(passwordField);
 
         JLabel cargoLabel = new JLabel("Cargo:");
@@ -55,54 +60,48 @@ public class Login extends JFrame {
 
         cbCargo = new JComboBox<>(new String[]{"Seleccione", "Alumno", "Profesor"});
         cbCargo.setFont(new Font("Verdana", Font.PLAIN, 14));
-        cbCargo.setBounds(120, 110, 200, 25);
+        cbCargo.setBounds(120, 110, 165, 25);
         getContentPane().add(cbCargo);
 
-        logo = new JButton("");
-        logo.setIcon(new ImageIcon(Login.class.getResource("/imagenes/logo.png")));
-        logo.setBounds(356, 30, 113, 79);
-        getContentPane().add(logo);
+        btnEntrar = new JButton("Iniciar Sesión");
+        btnEntrar.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        btnEntrar.setBounds(181, 160, 150, 30);
+        getContentPane().add(btnEntrar);
+        btnEntrar.addActionListener(e -> validarLogin());
 
-        JButton loginbtn = new JButton("Iniciar Sesión");
-        loginbtn.setFont(new Font("Tahoma", Font.PLAIN, 14));
-        loginbtn.setBounds(181, 160, 150, 30);
-        getContentPane().add(loginbtn);
-
-        JButton limpiarbtn = new JButton("Limpiar");
-        limpiarbtn.setFont(new Font("Tahoma", Font.PLAIN, 14));
-        limpiarbtn.setBounds(30, 200, 100, 30);
-        getContentPane().add(limpiarbtn);
-
-        JButton salirbtn = new JButton("Salir");
-        salirbtn.setFont(new Font("Tahoma", Font.PLAIN, 14));
-        salirbtn.setBounds(389, 200, 80, 30);
-        getContentPane().add(salirbtn);
-
-        JButton btnRegistrar = new JButton("Registrese");
-        btnRegistrar.setFont(new Font("Tahoma", Font.PLAIN, 14));
-        btnRegistrar.setForeground(Color.BLUE);
-        btnRegistrar.setBounds(206, 200, 100, 30);
-        getContentPane().add(btnRegistrar);
-
-        loginbtn.addActionListener(e -> validarLogin());
-        btnRegistrar.addActionListener(e -> new Registro().setVisible(true));
-        limpiarbtn.addActionListener(e -> {
+        btnLimpiar = new JButton("Limpiar");
+        btnLimpiar.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        btnLimpiar.setBounds(30, 200, 100, 30);
+        getContentPane().add(btnLimpiar);
+        btnLimpiar.addActionListener(e -> {
             userField.setText("");
             passwordField.setText("");
             cbCargo.setSelectedIndex(0);
         });
-        salirbtn.addActionListener(e -> System.exit(0));
+
+        btnSalir = new JButton("Salir");
+        btnSalir.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        btnSalir.setBounds(389, 200, 80, 30);
+        getContentPane().add(btnSalir);
+        btnSalir.addActionListener(e -> System.exit(0));
+
+        btnRegistrar = new JButton("Regístrese");
+        btnRegistrar.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        btnRegistrar.setForeground(Color.BLUE);
+        btnRegistrar.setBounds(206, 200, 100, 30);
+        getContentPane().add(btnRegistrar);
+        btnRegistrar.addActionListener(e -> new Registro().setVisible(true));
     }
 
     private void validarLogin() {
-        String cargo = (String) cbCargo.getSelectedItem();//Obtiene el cargo
-        String user = userField.getText();//Obtiene el usuario
+        String cargo = (String) cbCargo.getSelectedItem();
+        String user = userField.getText();
         String password = new String(passwordField.getPassword());
 
         if ("Alumno".equals(cargo)) {
             try {
                 ResultSet rs = db.buscarAlumno(user, password);
-                if (rs != null && rs.next()) {//En encuentra el resultado puede recuperar el objeto
+                if (rs != null && rs.next()) {
                     Alumno alumno = new Alumno(
                         rs.getString("dni_alumno"),
                         rs.getString("nombre"),
@@ -122,7 +121,6 @@ public class Login extends JFrame {
         } else if ("Profesor".equals(cargo)) {
             try {
                 ResultSet rs = db.buscarProfesor(user, password);
-                
                 if (rs != null && rs.next()) {
                     Profesor profesor = new Profesor(
                         rs.getString("nombre"),

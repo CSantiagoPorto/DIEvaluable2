@@ -123,7 +123,7 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
 
         btGuardar.addActionListener(e -> guardarNota());
         btnSalir.addActionListener(e -> {
-            new Login().setVisible(true);
+            new VentanaInicio().setVisible(true);
             dispose();
         });
         
