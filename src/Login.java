@@ -95,14 +95,14 @@ public class Login extends JFrame {
     }
 
     private void validarLogin() {
-        String cargo = (String) cbCargo.getSelectedItem();
-        String user = userField.getText();
+        String cargo = (String) cbCargo.getSelectedItem();//Obtiene el cargo
+        String user = userField.getText();//Obtiene el usuario
         String password = new String(passwordField.getPassword());
 
         if ("Alumno".equals(cargo)) {
             try {
                 ResultSet rs = db.buscarAlumno(user, password);
-                if (rs != null && rs.next()) {
+                if (rs != null && rs.next()) {//En encuentra el resultado puede recuperar el objeto
                     Alumno alumno = new Alumno(
                         rs.getString("dni_alumno"),
                         rs.getString("nombre"),
@@ -122,6 +122,7 @@ public class Login extends JFrame {
         } else if ("Profesor".equals(cargo)) {
             try {
                 ResultSet rs = db.buscarProfesor(user, password);
+                
                 if (rs != null && rs.next()) {
                     Profesor profesor = new Profesor(
                         rs.getString("nombre"),

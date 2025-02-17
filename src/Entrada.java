@@ -7,8 +7,7 @@ public class Entrada {
             public void run() {
                 try {
                 	
-                	//Me he traído esto desde la ventana de registro
-                    // Salta la ventana de Login
+             
                     Login frame = new Login();
                     frame.setVisible(true);
                 } catch (Exception e) {

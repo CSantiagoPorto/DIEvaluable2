@@ -23,31 +23,34 @@ public class GestionBD {
 
 	private ResultSet resultado;
 	
+	//Obtener datos--> ResulSet
+    //Guardar datos boolean
 	
 	
 	
-	//OK
 	public ResultSet mostrarNotasAlumno(String dniAlumno) throws SQLException {
 		con= conexion.getConexion();
 		String query= "SELECT asignaturas.denominacion, notas.calificacion " + "FROM notas " + "JOIN asignaturas ON notas.id_asignatura= asignaturas.id_asignatura "+ "WHERE notas.dni = '" +  dniAlumno + "'";
-		
-		System.out.println("Estoy ejecutando"+ query);
-		
-		
+	//Selecciona la denominación y la calificación desde sus tablas
+		//Se unen las tablas 
+		//Devuelve los resultados para un alumno con un dni dado
 		st = (Statement) con.createStatement();
 		return st.executeQuery(query);
+		
+		//retorna un objeto ResulSet, con sus dos columnas y tantas filas como resultados positivos a dni
 	}
 	
 	//Necesito un método que me de una nota para x alumno en x asignatura
+	//Con este método saco el nombre del comboBox, y busco su id por su denominación
 	public String obtenerIdAsignaturaPorNombre(String nombreModulo) {
 	    try {
 	        con = conexion.getConexion();
 	        String query = "SELECT id_asignatura FROM asignaturas WHERE denominacion = '" + nombreModulo + "'";
 	        st = (Statement) con.createStatement();
-	        ResultSet rs = st.executeQuery(query);
+	        ResultSet rs = st.executeQuery(query);//Ejecuta y almacena la consulta
 
-	        if (rs.next()) {
-	            return rs.getString("id_asignatura");
+	        if (rs.next()) {//Itera
+	            return rs.getString("id_asignatura");//Devuelve resultado
 	        }
 	        rs.close();
 	    } catch (SQLException e) {
@@ -56,22 +59,20 @@ public class GestionBD {
 	    return null;
 	}
 
-	//OK
+	
 	public ResultSet notaAlumnoAsignatura(String dniAlumno, String idAsignatura) throws SQLException {
 		
-		//Como el comboBox tiene nombre y no notas, primero hay que converti el nombre en su id_asignatura
+		
 	    con = conexion.getConexion();
 	    String query= "SELECT calificacion FROM notas WHERE dni =  '"+dniAlumno+ "' AND ID_ASIGNATURA = '"+ idAsignatura+ "'";
 	    
-	    System.out.println("Ejecutando consulta: " + query);
+	    
 	    st = (Statement) con.createStatement();
 	    return st.executeQuery(query);
 	}
 
 	
-	
-	//Necesito un método para que el profesor cargue los módulos
-	//Realmente esto sería un Inner con un Where al dni
+
 	
 	public ResultSet modulosProfesor(String dniProfesor) throws SQLException {
 	    con = conexion.getConexion();
@@ -95,16 +96,10 @@ public class GestionBD {
 	}
 
 
-
-
 	
-	//COMPROBAR
 	public ResultSet obtenerNotasAlumno(String dniAlumno) throws SQLException {
 	    con = conexion.getConexion();
-	    //Obtener datos--> ResulSet
-	    //Guardar datos boolean
-	    
-	    //NECESITO INNER JOIN PORQUE TENGO QUE RELACIONAR LAS 2 COLUMNAS
+  
 	    String query = "SELECT asignaturas.DENOMINACION, notas.NOTA FROM notas " +
 	                 "JOIN asignaturas ON notas.ID_ASIGNATURA = asignaturas.ID_ASIGNATURA " +
 	                 "WHERE notas.DNI_ALUMNO = '" + dniAlumno + "'";
@@ -114,7 +109,7 @@ public class GestionBD {
 	    return st.executeQuery(query);
 	    
 	}
-//COMPROBAR
+
 	//Como hemos puesto como Varchar el id_Nota necesito generarlo
 	public String generarIdNota(String dniAlumno, String idAsignatura) {
 	    return "N" + dniAlumno + idAsignatura + System.currentTimeMillis();
@@ -127,15 +122,15 @@ public class GestionBD {
 	    	 System.out.println("Intentando poner nota. DNI: " + dniAlumno + ", ID Asignatura: " + idAsignatura + ", Nota: " + nota);
 	    String existe="SELECT * FROM notas WHERE dni = '"+ dniAlumno +"' AND ID_ASIGNATURA= '"+ idAsignatura + "'";
 	   
-	    System.out.println("Consulta de existencia: " + existe);
+	    System.out.println("Está leyendo la consulta?: " + existe);
 	    st=(Statement) con.createStatement();
 	    ResultSet rs = st.executeQuery(existe);
 	    
 	    //Si ya existe necesito hacer un UPDATE
 	    if(rs.next()) {
-	    	rs.close();//cierro el rs a ver si va a ser eso
+	    	rs.close();
 	    String actualizar= "UPDATE notas SET calificacion= '"+nota+ "' WHERE dni = '"+dniAlumno+ "' AND id_asignatura = '"+ idAsignatura + "'";
-	    System.out.println("Ejecutando UPDATE: " + actualizar);
+	    //System.out.println("el update es : " + actualizar);
 	        st = (Statement) con.createStatement(); 
 
 	        int confirmar = st.executeUpdate(actualizar); 
@@ -171,7 +166,7 @@ public class GestionBD {
 
 	
 
-	//REVISADO Y EN USO
+
 	public ResultSet obtenerDniPorNombre(String nombreCompleto) throws SQLException {
 	    con = conexion.getConexion();
 	    
@@ -206,7 +201,7 @@ public class GestionBD {
 		}
 		return resultado;
 	}
-	//REVISADO Y ADAPTADO PARA QUE BUSQUE POR NOMBRE
+	
 	
 	public ResultSet buscarProfesor(String nombre, String password) throws SQLException {
 	    con = conexion.getConexion();

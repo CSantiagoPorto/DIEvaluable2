@@ -50,6 +50,8 @@ public class VentanaAlumno extends JFrame {
         		if(e.getStateChange()==ItemEvent.SELECTED) {
         			String asignaturaSelect= (String) cbAsignatura.getSelectedItem();
         			mostrarNota(asignaturaSelect);
+        			
+        			//Detecta el cambio y llama a mostrar asignatura
         		}
         	}
         });
@@ -77,30 +79,25 @@ public class VentanaAlumno extends JFrame {
             }
         });
 
-        System.out.println(" Llamando a mostrarAsignaturas() para el alumno: " + alumno.getDni_alumno());
         mostrarAsignaturas();
-
+        //Aquí el constructor llama a mostrarAsignaturas(). MostrarAsignaturas tiene que llamar
+        //a bd.mostrarAlumno--> Devuelve ResulSet con las asignaturas
        
        
     }
 
     private void mostrarAsignaturas() {
     	try {
-    		boolean todoBien=true;
+    	
 			ResultSet rs= bd.mostrarNotasAlumno(alumno.getDni_alumno());
-			cbAsignatura.removeAllItems();
-			while(rs.next()) {
-				String asignatura= rs.getString("denominacion");
+			
+			while(rs.next()) {//Iteramos las filas del ResulSet que me devuelve el método mostrarNotasAlumno
+				String asignatura= rs.getString("denominacion");//Obtenemos el nombre de la asignatura
+				//Obtengo el nombre porque lo que necesito poner en el Combox es el nombre, no el id
 				System.out.println("agregando al cbB la asignatura:"+ asignatura);
-				cbAsignatura.addItem(asignatura);
+				cbAsignatura.addItem(asignatura);//Añade la asignatura al ComboBox
 			}
-			
-			
-			if(!todoBien) {
-				System.out.println("No hay asignaturas en el comboBox");
-			}
-			cbAsignatura.revalidate();
-	        cbAsignatura.repaint();
+		
 			
 			rs.close();
 		} catch (SQLException e) {
@@ -113,12 +110,8 @@ public class VentanaAlumno extends JFrame {
     
 
     private void mostrarNota(String asignaturaNombre) {
-    	
-    	//Hay que hacer un método que me permita buscar la asignatura por el nombre
-    	//Porque en el combo sale el nombre
-    	//Buscar al alumno para ese nombre y extraer la nota
    
-    	
+    	//Busca el id a partir del nombre
     	String asignatura= bd.obtenerIdAsignaturaPorNombre(asignaturaNombre);
     	if(asignatura==null) {
     		System.out.println("No estoy encontrando la asignatura");
@@ -126,8 +119,10 @@ public class VentanaAlumno extends JFrame {
     	}
     	
     	try {
+    		//Busca lanota del alumno para esa asignatura
 			ResultSet rs = bd.notaAlumnoAsignatura(alumno.getDni_alumno(), asignatura);
 			if(rs.next()) {
+				//Si la consulta devuelve una nota la muestra en el tf
 				tfNota.setText(rs.getString("calificacion"));
 			}
 			rs.close();

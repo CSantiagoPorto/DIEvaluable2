@@ -68,19 +68,19 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
 
         cbAlumnos = new JComboBox<>();
       
-        //Hacemos un evento de cambio en los alumnos
+        //Hacemos un evento de cambio 
         cbAlumnos.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     String alumnoSeleccionado = (String) cbAlumnos.getSelectedItem();
-                    String asignaturaSeleccionada = (String) cbModulos.getSelectedItem();
+                    String asignaturaSeleccionada = (String) cbModulos.getSelectedItem();//Devuelve el módulo que el usuario ha seleccionado
                     if (alumnoSeleccionado == null || asignaturaSeleccionada == null) {
                         System.out.println("Alumno o asignatura no seleccionados.");
                         return;
                     }
 
-                    System.out.println("Alumno seleccionado: " + alumnoSeleccionado);
+                    //System.out.println("Alumno seleccionado: " + alumnoSeleccionado);
                     String dniAlumno = obtenerDniAlumno(alumnoSeleccionado);
 
 
@@ -127,8 +127,73 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
             dispose();
         });
         
-        cbModulos.addItemListener(this);
+        cbModulos.addItemListener(this);//Hay que iniciar
         
+    }
+
+
+
+
+    public void mostrarModulos(String dniProfesor) {
+    	
+    	try {
+			ResultSet rs = db.modulosProfesor(dniProfesor);
+			cbModulos.removeAllItems(); 
+			while(rs.next()) {
+				String modulo = rs.getString("denominacion");
+				//System.out.println("Módulo encontrado: " + modulo);
+				cbModulos.addItem(modulo); ;//Necesito el valor que está en la columna
+				//cbModulos.addItem(modulo);Aquí se seleeciona la asignatura
+				//rs es un Resulset, por lo tanto tiene la consulta y getString me devuelve el registro que tiene guardado el valor que hemos obtenido de la consulta
+			}
+			rs.close();
+		} catch (SQLException e) {
+			
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(btGuardar, "No carga los módulos");
+		}
+    	
+    	
+    }
+    //Este método DETECTA el cambio
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            String nombreAsignatura = (String) cbModulos.getSelectedItem();
+            //System.out.println("Asignatura seleccionada: " + nombreAsignatura);
+
+            String idAsignatura = db.obtenerIdAsignaturaPorNombre(nombreAsignatura);
+            if (idAsignatura == null) {
+               // System.out.println("No se encontró un ID para la asignatura: " + nombreAsignatura);
+                JOptionPane.showMessageDialog(this, "No se encontró la asignatura seleccionada.", "Error", JOptionPane.ERROR_MESSAGE);
+                cbAlumnos.removeAllItems();
+                return;
+            }
+
+          //  System.out.println("ID de la asignatura: " + idAsignatura);
+            mostrarAlumnos(idAsignatura);
+
+        }
+    }
+    public void mostrarAlumnos(String idAsignatura) {
+        try {
+           
+            System.out.println("ID Asignatura recibido: " + idAsignatura);
+            cbAlumnos.removeAllItems();
+
+            ResultSet rs = db.obtenerAlumnoAsignatura(idAsignatura);
+
+            while (rs.next()) {
+                String nombreA = rs.getString("nombre") + " " + rs.getString("apellidos");
+              //  System.out.println("Alumno encontrado: " + nombreA);
+                cbAlumnos.addItem(nombreA);
+            }
+
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al cargar los alumnos", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
     private String obtenerDniAlumno(String nombreCompleto) {
         try {
@@ -142,106 +207,10 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
         return null;
     }
 
-    public void guardarNota() {
-        String asignaturaSelec = (String) cbModulos.getSelectedItem();
-        String alumnoSelec = (String) cbAlumnos.getSelectedItem();
-        String notaIngresada = tfNota.getText();
-
-        if (asignaturaSelec == null || alumnoSelec == null) {
-            JOptionPane.showMessageDialog(this, "Debe seleccionar un módulo y un alumno", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-      
-        String idAsignatura = db.obtenerIdAsignaturaPorNombre(asignaturaSelec);
-        if (idAsignatura == null) {
-            JOptionPane.showMessageDialog(this, "No se encontró la asignatura seleccionada", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String dniAlumno = obtenerDniAlumno(alumnoSelec);
-        if (dniAlumno == null) {
-            JOptionPane.showMessageDialog(this, "No se encontró el alumno seleccionado", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-     
-        double nota;
-        try {
-            nota = Double.parseDouble(notaIngresada);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "La nota no es válida", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-            boolean guardado = db.ponerNota(dniAlumno, idAsignatura, notaIngresada);
-            if (guardado) {
-                JOptionPane.showMessageDialog(this, "Nota actualizada correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "No se pudo guardar la nota", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al guardar la nota", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    public void mostrarModulos(String dniProfesor) {
-    	
-    	try {
-			ResultSet rs = db.modulosProfesor(dniProfesor);
-			cbModulos.removeAllItems(); 
-			while(rs.next()) {
-				String modulo = rs.getString("denominacion");
-				System.out.println("Módulo encontrado: " + modulo);
-				cbModulos.addItem(modulo); ;//Necesito el valor que está en la columna
-				//rs es un Resulset, por lo tanto tiene la consulta y getString me devuelve el registro que tiene guardado el valor que hemos obtenido de la consulta
-			}
-			rs.close();//HAY QUE CERRARLO
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			JOptionPane.showMessageDialog(btGuardar, "No carga los módulos");
-		}
-    	
-    	
-    }
-    public void mostrarAlumnos(String idAsignatura) {
-        try {
-           
-            System.out.println("ID Asignatura recibido: " + idAsignatura);
-            cbAlumnos.removeAllItems();
-
-            ResultSet rs = db.obtenerAlumnoAsignatura(idAsignatura);
-
-        
-            if (!rs.isBeforeFirst()) { 
-                System.out.println("No hay alumnos matriculados en esta asignatura.");
-                JOptionPane.showMessageDialog(this, "No hay alumnos matriculados en este módulo.", "Información", JOptionPane.INFORMATION_MESSAGE);
-              //  cbAlumnos.removeAllItems();
-                return;
-            }
-
-          
-           // cbAlumnos.removeAllItems();
-            while (rs.next()) {
-                String nombreA = rs.getString("nombre") + " " + rs.getString("apellidos");
-                System.out.println("Alumno encontrado: " + nombreA);
-                cbAlumnos.addItem(nombreA);
-            }
-
-            rs.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al cargar los alumnos", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
 
     public void mostrarNota(String dniAlumno, String nombreAsignatura) {
     	try {
-    		//El combo me devuelve el nmbre, necesito obtener el id, para poder eenseñar la nota
+    		//El combo me devuelve el nmbre, necesito obtener el id, para poder enseñar la nota
     		String idAsignatura=db.obtenerIdAsignaturaPorNombre(nombreAsignatura);
     		if(idAsignatura == null) {
     			 System.out.println("Error: No se encontró ID para la asignatura " + nombreAsignatura);
@@ -264,27 +233,45 @@ public class VentanaProfesor extends JFrame implements ActionListener, ItemListe
 			JOptionPane.showMessageDialog(tfNota, "Error al mostrar la nota");
 		}
     }
+    public void guardarNota() {
+        String asignaturaSelec = (String) cbModulos.getSelectedItem();//Obtenemos el NOMBRE
+        String alumnoSelec = (String) cbAlumnos.getSelectedItem();//Obtenemos el nombre del alumno
+        String notaIngresada = tfNota.getText();//La nota del text
 
-    
-    @Override
-    public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-            String nombreAsignatura = (String) cbModulos.getSelectedItem();
-            System.out.println("Módulo seleccionado: " + nombreAsignatura);
+      
 
-            String idAsignatura = db.obtenerIdAsignaturaPorNombre(nombreAsignatura);
-            if (idAsignatura == null) {
-                System.out.println("No se encontró un ID para la asignatura: " + nombreAsignatura);
-                JOptionPane.showMessageDialog(this, "No se encontró la asignatura seleccionada.", "Error", JOptionPane.ERROR_MESSAGE);
-                cbAlumnos.removeAllItems();
-                return;
+      //Obtenemos el ID  a partir del nombre
+        String idAsignatura = db.obtenerIdAsignaturaPorNombre(asignaturaSelec);
+     
+
+        String dniAlumno = obtenerDniAlumno(alumnoSelec);
+        if (dniAlumno == null) {
+            JOptionPane.showMessageDialog(this, "No se encontró el alumno seleccionado", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+     
+        double nota;
+        try {
+            nota = Double.parseDouble(notaIngresada);//En la BD es un VARCHAR
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "La nota no es válida", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            boolean guardado = db.ponerNota(dniAlumno, idAsignatura, notaIngresada);
+            if (guardado) {
+                JOptionPane.showMessageDialog(this, "Nota actualizada correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo guardar la nota", "Error", JOptionPane.ERROR_MESSAGE);
             }
-
-            System.out.println("ID real de la asignatura: " + idAsignatura);
-            mostrarAlumnos(idAsignatura);
-
+        } catch (SQLException e) {
+            e.printStackTrace();
+            
         }
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
