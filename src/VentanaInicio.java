@@ -25,7 +25,7 @@ public class VentanaInicio extends JFrame {
     	setIconImage(Toolkit.getDefaultToolkit().getImage(VentanaInicio.class.getResource("/Imagenes/logo_resized_50x50.png")));
         db = new GestionBD();
         setResizable(false);
-        setTitle("Login");
+        setTitle("Ventana de Inicio");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 500, 350);
         getContentPane().setBackground(SystemColor.control);

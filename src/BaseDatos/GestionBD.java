@@ -119,10 +119,10 @@ public class GestionBD {
 	    boolean insertado = false;
 	    con = conexion.getConexion(); 
 	    try {
-	    	 System.out.println("Intentando poner nota. DNI: " + dniAlumno + ", ID Asignatura: " + idAsignatura + ", Nota: " + nota);
+	    	// System.out.println("Intentando poner nota. DNI: " + dniAlumno + ", ID Asignatura: " + idAsignatura + ", Nota: " + nota);
 	    String existe="SELECT * FROM notas WHERE dni = '"+ dniAlumno +"' AND ID_ASIGNATURA= '"+ idAsignatura + "'";
 	   
-	    System.out.println("Está leyendo la consulta?: " + existe);
+	    //System.out.println("Está leyendo la consulta?: " + existe);
 	    st=(Statement) con.createStatement();
 	    ResultSet rs = st.executeQuery(existe);
 	    
@@ -188,19 +188,7 @@ public class GestionBD {
 	    return null;
 	}
 
-	public ResultSet BuscarAlumno(String dni_alumno) throws SQLException {
-		con=conexion.getConexion();
-		String sql="SELECT * FROM alumnos WHERE DNI='"+dni_alumno+"' ";
-		try{
-			st=(Statement) con.createStatement();
-			resultado= st.executeQuery(sql);
-			
-		}
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return resultado;
-	}
+	
 	
 	
 	public ResultSet buscarProfesor(String nombre, String password) throws SQLException {
